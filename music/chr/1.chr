@@ -1,0 +1,24 @@
+a a0 0 220
+a a1 1 a0:5/4
+a a2 2 a0:3/2
+a a3 3 a0:16/9
+program 99 a0 a1 a2 a3
+p a0
+sleep 0.5
+p a1
+sleep 0.5
+p a2
+sleep 0.5
+p a3
+sleep 3
+as
+r a1 a2 a3
+a b0 1 a0:2/3
+a b1 2 b0:2/1
+a b2 3 b0:5/2
+a b3 4 b0:6/4
+program 99 b0 b1 b2 b3
+i
+p b0 b1 b2 b3
+sleep 4.5
+as

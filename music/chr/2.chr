@@ -1,0 +1,30 @@
+a a0 0 220
+a a1 1 a0:3/2
+program 99 a0 a1
+ap
+sleep 2
+c a1 a0:4/3
+ap
+sleep 2
+c a1 a0:5/4
+ap
+sleep 2
+c a1 a0:6/5
+ap
+sleep 2
+c a1 a0:7/6
+ap
+sleep 2
+c a1 a0:8/7
+ap
+sleep 2
+c a1 a0:9/8
+ap
+sleep 2
+c a1 a0:10/9
+ap
+sleep 2
+c a1 a0:11/10
+ap
+sleep 2
+as

@@ -1,0 +1,42 @@
+COMMENT: "#" /[^\n]/*
+NUMBER: ("0".."9")+
+NAME: ("a".."z" | "A".."Z" | "_") ("0".."9" | "a".."z" | "A".."Z" | "_")*
+INTEGER: "-"? NUMBER
+REAL: NUMBER ("." NUMBER)?
+%ignore COMMENT
+%ignore " "
+
+numerator: NUMBER
+denominator: NUMBER
+fraction: numerator "/" denominator
+parent: NAME
+octave: NUMBER
+harmonic: NUMBER
+ratio: parent (":" octave? "@" harmonic ("," harmonic)*)? | octave? "@" harmonic ("," harmonic)*
+
+
+start: (line | multiline)+
+line: (cmd | COMMENT)? "\n"
+multiline: (cmd | COMMENT) (";" (cmd | COMMENT))+ "\n"
+
+cmd: info
+    | bpm
+    | signature
+    | program
+    | frequency
+    | note
+    | note_on
+    | note_off
+    | sleep
+    | sync
+
+info: "info" NAME
+bpm: "bpm" NUMBER
+signature: "sig" fraction
+program: "prog" NUMBER NAME*
+frequency: NAME "=" REAL
+note: NAME "=" ratio
+note_on: NAME "+"
+note_off: NAME "-"
+sleep: "sl" fraction
+sync: "sync" "b"

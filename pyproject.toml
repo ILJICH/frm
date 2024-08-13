@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chord-analyzer"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "ILJICH", email = "iljich@iljich.name" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "mido",
+  "lark",
+  "tabulate",
+]
+
+[project.urls]
+Documentation = "https://github.com/ILJICH/chord-analyzer#readme"
+Issues = "https://github.com/ILJICH/chord-analyzer/issues"
+Source = "https://github.com/ILJICH/chord-analyzer"
+
+[tool.hatch.version]
+path = "src/chord_analyzer/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/chord_analyzer tests}"
+
+[tool.coverage.run]
+source_pkgs = ["chord_analyzer", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/chord_analyzer/__about__.py",
+]
+
+[tool.coverage.paths]
+chord_analyzer = ["src/chord_analyzer", "*/chord-analyzer/src/chord_analyzer"]
+tests = ["tests", "*/chord-analyzer/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
