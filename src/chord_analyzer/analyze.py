@@ -95,8 +95,28 @@ def print_negatives(size):
         print(f'-{i} = {harmonics}')
 
 
-print_resolutions(64)
-print('\n', '*' * 64, '\n')
-print(tabulate(sum_table(size=32, mode='harmonics')))
-print('\n', '*' * 64, '\n')
-print_negatives(16)
+def scale_analysis(*intervals):
+    size = len(intervals)
+    result = [[None] * size for _ in range(size)]
+    for i in range(size):
+        n, d = 1, 1
+        for j in range(size):
+            cell = (i + j) % size
+            n = n * intervals[cell]
+            d = d * (intervals[cell] - 1)
+            result[i][(cell+1)%size] = get_harmonics(*simplify((n, d)))
+    return result
+
+
+def print_charts():
+    print_resolutions(64)
+    print('\n', '*' * 64, '\n')
+    print(tabulate(sum_table(size=32, mode='harmonics')))
+    print('\n', '*' * 64, '\n')
+    print_negatives(16)
+
+
+if __name__ == "__main__":
+    #print(tabulate(scale_analysis(7, 8, 9, 7, 8)))
+    #print(tabulate(scale_analysis(9,16,25,16,9,9,16,25,16)))
+    print_charts()

@@ -13,10 +13,18 @@ bend_limit = 2**13
 bend_semitones = 2.0
 
 
-def get_port():
-    return mido.open_output(
-        [o for o in mido.get_output_names() if o.startswith('FLUID')][0]
-    )
+def get_output_port(name):
+    if name is None:
+        return mido.open_output()
+
+    outputs = mido.get_output_names()
+    matches = [o for o in outputs if o.startswith(name)]
+    if not matches:
+        raise ValueError(f'No output "{name}" among: {outputs}')
+    return mido.open_output(matches[0])
+
+def open_output_port(name):
+    return mido.open_output(name, virtual=True)
 
 
 def freq_to_midi(freq):
@@ -54,7 +62,7 @@ class ChrPlayer:
     index = {}
 
     def __init__(self, freq=220.0):
-        self.port = get_port()
+        self.port = get_output_port('FLUID')
         self.b0 = Interval(1, 1)
 
     def _names(self, names):

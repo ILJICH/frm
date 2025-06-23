@@ -31,6 +31,7 @@ dependencies = [
   "mido",
   "lark",
   "tabulate",
+  "pygame"
 ]
 
 [project.urls]

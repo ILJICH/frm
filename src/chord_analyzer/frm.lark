@@ -10,8 +10,8 @@ numerator: NUMBER
 denominator: NUMBER
 fraction: numerator "/" denominator
 parent: NAME
-octave: NUMBER
-harmonic: NUMBER
+octave: INTEGER
+harmonic: INTEGER
 ratio: parent (":" octave? "@" harmonic ("," harmonic)*)? | octave? "@" harmonic ("," harmonic)*
 
 

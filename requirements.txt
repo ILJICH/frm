@@ -1,0 +1,6 @@
+pygame
+mido
+lark
+numpy
+tabulate
+python-rtmidi

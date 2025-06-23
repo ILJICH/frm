@@ -8,7 +8,8 @@ import traceback
 import mido
 from lark import Lark, Token, Tree, UnexpectedCharacters
 
-from play_chr import get_port, freq_to_midi
+from analyze import simplify
+from play_chr import get_output_port, open_output_port, freq_to_midi
 
 
 logging.basicConfig()
@@ -108,11 +109,38 @@ class Note:
     def freq(self):
         total_n, total_d = 1, 1
         for n in self.harmonics:
-            d = max(1, n-1)
-            total_n *= n
-            total_d *= d
+            if n > 0:
+                total_n *= n
+                total_d *= max(1, n-1)
+            else:
+                total_n *= max(1, -n-1)
+                total_d *= -n
         octave = self.octave or 0
         return self.parent.freq() * (2**octave) * total_n / total_d
+
+    def absolute(self):
+        total_n, total_d = 1, 1
+        for n in self.harmonics:
+            if n > 0:
+                total_n *= n
+                total_d *= max(1, n-1)
+            else:
+                total_n *= max(1, -n-1)
+                total_d *= -n
+        while total_n / total_d >= 2:
+            total_d *= 2
+        while total_n / total_d < 1:
+            total_n *= 2
+        return simplify((total_n, total_d))
+
+    def __copy__(self):
+        return Note(
+            parent=parent,
+            octave=octave,
+            harmonics=harmonics[:],
+            sound=sound,
+            program=program
+        )
 
 
 CHANNELS_NUM = 16
@@ -148,11 +176,11 @@ class FrmPlayer:
 
     running = False
 
-    def __init__(self, parser):
+    def __init__(self, parser, port):
         log.info('Initializing player')
         self.parser = parser
         log.info('Opening port')
-        self.port = get_port()
+        self.port = port
         self.channels = ChannelRegistry()
 
     def _send(self, cmd, *args, **kwargs):
@@ -343,21 +371,21 @@ class FrmPlayer:
         
 
 
-def run_file(filename):
+def run_file(filename, port):
     try:
         log.info(f'Running: {filename}')
         parser = get_parser()
-        player = FrmPlayer(parser)
+        player = FrmPlayer(parser, port)
         file = get_file(filename)
         player.process(file)
     finally:
         player.stop()
 
 
-def run_cli():
+def run_cli(port):
     log.info('Running CLI')
     parser = get_parser()
-    player = FrmPlayer(parser)
+    player = FrmPlayer(parser, port)
     while True:
         try:
             inp = input(':> ')
@@ -377,10 +405,28 @@ def run_cli():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser('Play FRM files')
+    parser.add_argument(
+        "--output_name", dest='output_name',
+        nargs="?", default=None,
+        help='Name of the midi port to work with (or default system output, if not set)'
+    )
+    parser.add_argument(
+        "--virtual", dest='virtual',
+        action="store_true", default=False,
+        help=(
+            'If set, will open a new port (that others can connect to) '
+            'instead of connecting to a pre-existing one'
+        )
+    )
     parser.add_argument("filename", metavar='filename', nargs="*", help='Filename to play')
     args = parser.parse_args()
+
+    if args.virtual:
+        port = open_output_port(args.output_name)
+    else:
+        port = get_output_port(args.output_name)
     if args.filename:
         for filename in args.filename:
-            run_file(filename)
+            run_file(filename, port)
     else:
-        run_cli()
+        run_cli(port)

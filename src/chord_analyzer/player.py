@@ -1,9 +1,11 @@
+import argparse
 from dataclasses import dataclass
 from time import time
 
 import pygame
 
 from play_frm import Frequency, Note, FrmPlayer
+from play_chr import get_output_port, open_output_port
 
 
 class Voice:
@@ -72,8 +74,8 @@ class Player:
             'space': 0
         }
     }
-    def __init__(self):
-        self.frm = FrmPlayer(None)
+    def __init__(self, port):
+        self.frm = FrmPlayer(None, port)
         self.frm._new_frequency('f', 220)
         self.frm._new_note('voice', 'f', 0, [1])
         for i in range(0, 10):
@@ -141,8 +143,15 @@ class Player:
                     player.frm._note_off(player.state['drones'][drone].name)
         return clb
 
+    @classmethod
+    def get_change_program_callback(cls, delta):
+        def clb(player, on):
+            if on:
+                player.frm.program = max(0, player.frm.program + delta)
+        return clb
 
-mapping = {
+
+layout_1 = {
     pygame.K_TAB: Player.get_callback(1),
     pygame.K_q: Player.get_callback(3),
     pygame.K_w: Player.get_callback(4),
@@ -193,16 +202,78 @@ mapping = {
     pygame.K_8: Player.get_drone_callback(8),
     pygame.K_9: Player.get_drone_callback(9),
     pygame.K_0: Player.get_drone_callback(0),
+    pygame.K_KP_PLUS: Player.get_change_program_callback(1),
+    pygame.K_KP_MINUS: Player.get_change_program_callback(-1),
+}
+
+
+layout_2 = {
+    pygame.K_TAB: Player.get_callback(1),
+    pygame.K_q: Player.get_callback(3),
+    pygame.K_w: Player.get_callback(4),
+    pygame.K_e: Player.get_callback(5),
+    pygame.K_r: Player.get_callback(6),
+    pygame.K_t: Player.get_callback(7),
+    pygame.K_y: Player.get_callback(9),
+    pygame.K_u: Player.get_callback(10),
+    pygame.K_i: Player.get_callback(11),
+    pygame.K_o: Player.get_callback(13),
+    pygame.K_p: Player.get_callback(15),
+    pygame.K_LEFTBRACKET: Player.get_callback(16),
+    pygame.K_RIGHTBRACKET: Player.get_callback(17),
+    pygame.K_BACKSLASH: Player.get_callback(19),
+    pygame.K_a: Player.get_callback(3),
+    pygame.K_s: Player.get_callback(4),
+    pygame.K_d: Player.get_callback(5),
+    pygame.K_f: Player.get_callback(6),
+    pygame.K_g: Player.get_callback(7),
+    pygame.K_h: Player.get_callback(9),
+    pygame.K_j: Player.get_callback(10),
+    pygame.K_k: Player.get_callback(11),
+    pygame.K_l: Player.get_callback(15),
+    pygame.K_SEMICOLON: Player.get_callback(16),
+    pygame.K_QUOTE: Player.get_callback(17),
+    pygame.K_z: Player.get_callback(-3),
+    pygame.K_x: Player.get_callback(-4),
+    pygame.K_c: Player.get_callback(-5),
+    pygame.K_v: Player.get_callback(-6),
+    pygame.K_b: Player.get_callback(-7),
+    pygame.K_n: Player.get_callback(-9),
+    pygame.K_m: Player.get_callback(-10),
+    pygame.K_COMMA: Player.get_callback(-11),
+    pygame.K_PERIOD: Player.get_callback(-13),
+    pygame.K_SLASH: Player.get_callback(-15),
+    pygame.K_RSHIFT: Player.get_octave_callback(1),
+    pygame.K_LSHIFT: Player.get_octave_callback(1),
+    pygame.K_LCTRL: Player.get_octave_callback(-1),
+    pygame.K_RCTRL: Player.get_octave_callback(-1),
+    pygame.K_SPACE: Player.get_modifier_callback('space'),
+    pygame.K_1: Player.get_drone_callback(1),
+    pygame.K_2: Player.get_drone_callback(2),
+    pygame.K_3: Player.get_drone_callback(3),
+    pygame.K_4: Player.get_drone_callback(4),
+    pygame.K_5: Player.get_drone_callback(5),
+    pygame.K_6: Player.get_drone_callback(6),
+    pygame.K_7: Player.get_drone_callback(7),
+    pygame.K_8: Player.get_drone_callback(8),
+    pygame.K_9: Player.get_drone_callback(9),
+    pygame.K_0: Player.get_drone_callback(0),
+}
+
+
+layouts = {
+    1: layout_1,
+    2: layout_2,
 }
 
 
 code_to_name = {getattr(pygame, name): name for name in dir(pygame) if name.startswith('K_')}
 
 
-def run():
+def run(port, mapping):
     pygame.init()
 
-    player = Player()
+    player = Player(port)
     drawer = Drawer()
 
     running = True
@@ -240,7 +311,7 @@ class Drawer:
             harmonics = [1]
         else:
             octave = voice.octave
-            harmonics = voice.harmonics
+            harmonics = [h for h in voice.harmonics if h != 1]
 
         octave_text_surface = self.font.render(
             str(octave),
@@ -248,28 +319,12 @@ class Drawer:
             'white'
         )
         harmonics_text_surface = self.font.render(
-            '@' + ','.join(map(str, harmonics[1:])),
+            '@' + ','.join(map(str, harmonics)),
             True,
             'white'
         )
         self.screen.blit(octave_text_surface, (x, y))
         self.screen.blit(harmonics_text_surface, (x + 50, y))
-
-    def draw_harmonics(self, voice, x, y):
-        text_surface = self.font.render(
-            '@' + ','.join(map(str, voice.harmonics[1:])),
-            True,
-            'white'
-        )
-        self.screen.blit(text_surface, (x, y))
-
-    def draw_octave(self, octave, x, y):
-        text_surface = self.font.render(
-            str(octave),
-            True,
-            'white'
-        )
-        self.screen.blit(text_surface, (x, y))
 
     def update(self, state):
         self.screen.fill('purple')
@@ -289,4 +344,30 @@ class Drawer:
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser('FRM player')
+    parser.add_argument(
+        "--output_name", dest='output_name',
+        nargs="?", default=None,
+        help='Name of the midi port to work with (or default system output, if not set)'
+    )
+    parser.add_argument(
+        "--virtual", dest='virtual',
+        action="store_true", default=False,
+        help=(
+            'If set, will open a new port (that others can connect to) '
+            'instead of connecting to a pre-existing one'
+        )
+    )
+    parser.add_argument(
+        "--layout", dest='layout', default=1, type=int,
+        help=(
+            'Layout ID'
+        )
+    )
+    args = parser.parse_args()
+
+    if args.virtual:
+        port = open_output_port(args.output_name)
+    else:
+        port = get_output_port(args.output_name)
+    run(port, layouts[args.layout])
